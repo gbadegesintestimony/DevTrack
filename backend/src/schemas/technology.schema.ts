@@ -1,0 +1,31 @@
+import { z } from 'zod';
+
+export const TechStatusEnum = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'MASTERED', 'ON_HOLD']);
+
+export const createTechnologySchema = z.object({
+  name: z
+    .string({ required_error: 'Technology name is required' })
+    .min(1, 'Technology name cannot be empty')
+    .max(100, 'Technology name cannot exceed 100 characters')
+    .trim(),
+  description: z.string().max(1000).trim().optional().nullable(),
+  category: z.string().max(50).trim().optional().nullable(),
+  status: TechStatusEnum.optional().default('NOT_STARTED'),
+  progress: z.number().min(0).max(100).optional().default(0),
+  startDate: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)).optional().nullable(),
+  targetDate: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)).optional().nullable(),
+});
+
+export const updateTechnologySchema = createTechnologySchema.partial();
+
+export const technologyQuerySchema = z.object({
+  search: z.string().optional(),
+  status: TechStatusEnum.optional(),
+  category: z.string().optional(),
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(20),
+});
+
+export type CreateTechnologyInput = z.infer<typeof createTechnologySchema>;
+export type UpdateTechnologyInput = z.infer<typeof updateTechnologySchema>;
+export type TechnologyQueryInput = z.infer<typeof technologyQuerySchema>;
