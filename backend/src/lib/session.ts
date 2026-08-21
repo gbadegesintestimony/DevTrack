@@ -13,7 +13,7 @@ export const getSessionCookieOptions = (): CookieOptions => {
   return {
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? 'strict' : 'lax',
+    sameSite: isProd ? 'none' : 'lax', // 'none' allows cross-origin cookies between Vercel and Render
     path: '/',
     maxAge: SESSION_EXPIRATION_MS,
   };
@@ -24,7 +24,7 @@ export const getCsrfCookieOptions = (): CookieOptions => {
   return {
     httpOnly: false, // Read by JS to submit with state-changing requests in x-csrf-token header
     secure: isProd,
-    sameSite: isProd ? 'strict' : 'lax',
+    sameSite: isProd ? 'none' : 'lax', // 'none' allows cross-origin cookies between Vercel and Render
     path: '/',
     maxAge: SESSION_EXPIRATION_MS,
   };
@@ -140,13 +140,13 @@ export const destroySession = async (req: Request, res: Response) => {
   res.clearCookie(SESSION_COOKIE_NAME, {
     path: '/',
     httpOnly: true,
-    sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
     secure: env.NODE_ENV === 'production',
   });
   
   res.clearCookie(CSRF_COOKIE_NAME, {
     path: '/',
-    sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
     secure: env.NODE_ENV === 'production',
   });
 };
