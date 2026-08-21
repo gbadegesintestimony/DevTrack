@@ -15,6 +15,7 @@ import { GoalsPage } from './pages/GoalsPage';
 import { ResourcesPage } from './pages/ResourcesPage';
 import { SessionsPage } from './pages/SessionsPage';
 import { NotesPage } from './pages/NotesPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -87,6 +88,14 @@ export const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <NotesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
                   </ProtectedRoute>
                 }
               />

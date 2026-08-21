@@ -4,6 +4,7 @@ export interface User {
   username: string;
   name?: string | null;
   bio?: string | null;
+  learningPreferences?: string[] | null;
   createdAt: string;
   updatedAt: string;
 }

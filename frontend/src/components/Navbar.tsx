@@ -29,9 +29,9 @@ export const Navbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-surface-border/80 bg-background/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="w-full px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-3 group">
+        <Link to="/" className="flex items-center gap-3 group shrink-0">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary-600 to-accent-500 flex items-center justify-center text-white shadow-glow group-hover:scale-105 transition-transform duration-200">
             <Code2 className="w-5 h-5" />
           </div>
@@ -55,7 +55,7 @@ export const Navbar: React.FC = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 ${
                   isActive
                     ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
                     : 'text-slate-300 hover:text-white hover:bg-surface'
@@ -69,12 +69,17 @@ export const Navbar: React.FC = () => {
         </nav>
 
         {/* User / Auth Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3">
               <Link
-                to="/dashboard"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-dark-700 bg-dark-800/80 hover:border-brand-500/40 text-xs font-medium text-white transition-colors"
+                to="/profile"
+                title="View Profile & Settings"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                  location.pathname === '/profile'
+                    ? 'border-brand-500 bg-brand-500/10 text-white'
+                    : 'border-dark-700 bg-dark-800/80 hover:border-brand-500/40 text-white'
+                }`}
               >
                 <div className="w-6 h-6 rounded-lg bg-brand-600 flex items-center justify-center text-[11px] font-bold">
                   {user.username.substring(0, 1).toUpperCase()}
