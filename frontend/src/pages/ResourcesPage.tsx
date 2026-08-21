@@ -59,11 +59,16 @@ export const ResourcesPage: React.FC = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (newResource: typeof formData) =>
-      api.post('/resources', {
+    mutationFn: async (newResource: typeof formData) => {
+      const res = await api.post<LearningResource>('/resources', {
         ...newResource,
         technologyId: newResource.technologyId || undefined,
-      }),
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to create resource');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resources'] });
       closeModal();
@@ -71,11 +76,16 @@ export const ResourcesPage: React.FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<typeof formData> }) =>
-      api.patch(`/resources/${id}`, {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<typeof formData> }) => {
+      const res = await api.patch<LearningResource>(`/resources/${id}`, {
         ...updates,
         technologyId: updates.technologyId || undefined,
-      }),
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to update resource');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resources'] });
       closeModal();
@@ -83,7 +93,13 @@ export const ResourcesPage: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/resources/${id}`),
+    mutationFn: async (id: string) => {
+      const res = await api.delete(`/resources/${id}`);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to delete resource');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resources'] });
     },

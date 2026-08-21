@@ -6,10 +6,12 @@ import { generateSecureToken } from '../lib/crypto';
  * Middleware ensuring a CSRF cookie exists for the client.
  */
 export const ensureCsrfCookie = (req: Request, res: Response, next: NextFunction): void => {
-  if (!req.cookies?.[CSRF_COOKIE_NAME]) {
-    const token = generateSecureToken(24);
+  let token = req.cookies?.[CSRF_COOKIE_NAME];
+  if (!token) {
+    token = generateSecureToken(24);
     res.cookie(CSRF_COOKIE_NAME, token, getCsrfCookieOptions());
   }
+  res.setHeader('x-csrf-token', token);
   next();
 };
 

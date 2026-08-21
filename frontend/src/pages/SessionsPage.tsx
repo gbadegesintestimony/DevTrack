@@ -58,11 +58,16 @@ export const SessionsPage: React.FC = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (newSession: typeof formData) =>
-      api.post('/sessions', {
+    mutationFn: async (newSession: typeof formData) => {
+      const res = await api.post<LearningSession>('/sessions', {
         ...newSession,
         technologyId: newSession.technologyId || undefined,
-      }),
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to create session');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       closeModal();
@@ -70,11 +75,16 @@ export const SessionsPage: React.FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<typeof formData> }) =>
-      api.patch(`/sessions/${id}`, {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<typeof formData> }) => {
+      const res = await api.patch<LearningSession>(`/sessions/${id}`, {
         ...updates,
         technologyId: updates.technologyId || undefined,
-      }),
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to update session');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       closeModal();
@@ -82,7 +92,13 @@ export const SessionsPage: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/sessions/${id}`),
+    mutationFn: async (id: string) => {
+      const res = await api.delete(`/sessions/${id}`);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to delete session');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },

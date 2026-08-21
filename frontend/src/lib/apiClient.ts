@@ -8,17 +8,57 @@ class ApiClient {
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl.replace(/\/+$/, '');
+    if (typeof window !== 'undefined') {
+      this.csrfToken = sessionStorage.getItem('devtrack_csrf_token');
+    }
   }
 
   public setCsrfToken(token: string | null) {
     this.csrfToken = token;
+    if (typeof window !== 'undefined') {
+      if (token) {
+        sessionStorage.setItem('devtrack_csrf_token', token);
+      } else {
+        sessionStorage.removeItem('devtrack_csrf_token');
+      }
+    }
   }
 
   public getCsrfToken(): string | null {
     return this.csrfToken;
   }
 
+  public async ensureCsrf(): Promise<string | null> {
+    if (this.csrfToken) return this.csrfToken;
+
+    try {
+      const res = await fetch(`${this.baseUrl}/auth/csrf-token`, {
+        credentials: 'include',
+      });
+      const headerCsrf = res.headers.get('x-csrf-token');
+      if (headerCsrf) {
+        this.setCsrfToken(headerCsrf);
+        return headerCsrf;
+      }
+      const data = await res.json();
+      if (data.success && data.data?.csrfToken) {
+        this.setCsrfToken(data.data.csrfToken);
+        return data.data.csrfToken;
+      }
+    } catch {
+      // Ignore background CSRF prefetch errors
+    }
+    return this.csrfToken;
+  }
+
   public async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    const isMutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method?.toUpperCase() || 'GET');
+    
+    // Auto-fetch CSRF token if missing before mutating requests
+    if (isMutating && !this.csrfToken) {
+      await this.ensureCsrf();
+    }
+
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${this.baseUrl}${cleanEndpoint}`;
 
@@ -33,11 +73,11 @@ class ApiClient {
       const match = document.cookie.match(/(?:^|;\s*)devtrack_csrf=([^;]+)/);
       if (match) {
         csrf = decodeURIComponent(match[1]);
-        this.csrfToken = csrf;
+        this.setCsrfToken(csrf);
       }
     }
 
-    if (csrf && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method?.toUpperCase() || 'GET')) {
+    if (csrf && isMutating) {
       headers['x-csrf-token'] = csrf;
     }
 
@@ -51,7 +91,7 @@ class ApiClient {
       // Extract new CSRF token if returned in header
       const newCsrf = response.headers.get('x-csrf-token');
       if (newCsrf) {
-        this.csrfToken = newCsrf;
+        this.setCsrfToken(newCsrf);
       }
 
       const contentType = response.headers.get('content-type');

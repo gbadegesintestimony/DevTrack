@@ -50,11 +50,16 @@ export const GoalsPage: React.FC = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (newGoal: typeof formData) =>
-      api.post('/goals', {
+    mutationFn: async (newGoal: typeof formData) => {
+      const res = await api.post<Goal>('/goals', {
         ...newGoal,
         technologyId: newGoal.technologyId || undefined,
-      }),
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to create goal');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       closeModal();
@@ -62,11 +67,16 @@ export const GoalsPage: React.FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<typeof formData> }) =>
-      api.patch(`/goals/${id}`, {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<typeof formData> }) => {
+      const res = await api.patch<Goal>(`/goals/${id}`, {
         ...updates,
         technologyId: updates.technologyId || undefined,
-      }),
+      });
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to update goal');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       closeModal();
@@ -74,7 +84,13 @@ export const GoalsPage: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/goals/${id}`),
+    mutationFn: async (id: string) => {
+      const res = await api.delete(`/goals/${id}`);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to delete goal');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
     },

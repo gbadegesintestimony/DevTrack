@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <linearGradient id="devtrack-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded Squircle Background -->
+  <rect width="128" height="128" rx="34" fill="url(#devtrack-grad)"/>
+  
+  <!-- Code Brackets & Slash </> -->
+  <g fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left Bracket < -->
+    <polyline points="44,46 26,64 44,82" />
+    <!-- Slash / -->
+    <line x1="72" y1="36" x2="56" y2="92" />
+    <!-- Right Bracket > -->
+    <polyline points="84,46 102,64 84,82" />
+  </g>
+</svg>

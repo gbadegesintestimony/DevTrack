@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/apiClient';
 import { Technology, TechStatus } from '../types';
-import { Plus, Search, Cpu, Sparkles, Edit2, Trash2, X, Check, BookOpen, Target, Clock, FileText, Loader2 } from 'lucide-react';
+import { Plus, Search, Cpu, Sparkles, Edit2, Trash2, X, Check, BookOpen, Target, Clock, FileText, Loader2, AlertCircle } from 'lucide-react';
 
 const STATUS_CONFIG: Record<TechStatus, { label: string; color: string; bg: string; border: string }> = {
   NOT_STARTED: { label: 'Not Started', color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/20' },
@@ -17,6 +17,7 @@ export const TechnologiesPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTech, setEditingTech] = useState<Technology | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -28,43 +29,73 @@ export const TechnologiesPage: React.FC = () => {
     targetDate: '',
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['technologies', searchTerm, selectedStatus],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (selectedStatus !== 'ALL') params.append('status', selectedStatus);
       const res = await api.get<Technology[]>(`/technologies?${params.toString()}`);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to fetch technologies');
+      }
       return res.data || [];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (newTech: typeof formData) => api.post('/technologies', newTech),
+    mutationFn: async (newTech: typeof formData) => {
+      const res = await api.post<Technology>('/technologies', newTech);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to create technology');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['technologies'] });
+      refetch();
       closeModal();
+    },
+    onError: (err: Error) => {
+      setModalError(err.message);
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<typeof formData> }) =>
-      api.patch(`/technologies/${id}`, updates),
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<typeof formData> }) => {
+      const res = await api.patch<Technology>(`/technologies/${id}`, updates);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to update technology');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['technologies'] });
+      refetch();
       closeModal();
+    },
+    onError: (err: Error) => {
+      setModalError(err.message);
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/technologies/${id}`),
+    mutationFn: async (id: string) => {
+      const res = await api.delete(`/technologies/${id}`);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to delete technology');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['technologies'] });
+      refetch();
     },
   });
 
   const openCreateModal = () => {
     setEditingTech(null);
+    setModalError(null);
     setFormData({
       name: '',
       category: '',
@@ -79,6 +110,7 @@ export const TechnologiesPage: React.FC = () => {
 
   const openEditModal = (tech: Technology) => {
     setEditingTech(tech);
+    setModalError(null);
     setFormData({
       name: tech.name,
       category: tech.category || '',
@@ -94,10 +126,12 @@ export const TechnologiesPage: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingTech(null);
+    setModalError(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError(null);
     if (editingTech) {
       updateMutation.mutate({ id: editingTech.id, updates: formData });
     } else {
@@ -281,6 +315,13 @@ export const TechnologiesPage: React.FC = () => {
               </button>
             </div>
 
+            {modalError && (
+              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-dark-300 uppercase mb-1">Name *</label>
@@ -360,7 +401,11 @@ export const TechnologiesPage: React.FC = () => {
                   disabled={createMutation.isPending || updateMutation.isPending}
                   className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2 text-xs font-semibold text-white hover:bg-brand-500 shadow-md shadow-brand-500/20 disabled:opacity-50"
                 >
-                  <Check className="h-4 w-4" />
+                  {createMutation.isPending || updateMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
                   <span>{editingTech ? 'Update Technology' : 'Create Technology'}</span>
                 </button>
               </div>

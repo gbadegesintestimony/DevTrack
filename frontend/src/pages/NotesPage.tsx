@@ -42,8 +42,13 @@ export const NotesPage: React.FC = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (newNote: { title: string; content: string; technologyId?: string; tags: string[] }) =>
-      api.post('/notes', newNote),
+    mutationFn: async (newNote: { title: string; content: string; technologyId?: string; tags: string[] }) => {
+      const res = await api.post<Note>('/notes', newNote);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to create note');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
       closeModal();
@@ -51,8 +56,13 @@ export const NotesPage: React.FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<{ title: string; content: string; technologyId?: string; tags: string[] }> }) =>
-      api.patch(`/notes/${id}`, updates),
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<{ title: string; content: string; technologyId?: string; tags: string[] }> }) => {
+      const res = await api.patch<Note>(`/notes/${id}`, updates);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to update note');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
       closeModal();
@@ -60,7 +70,13 @@ export const NotesPage: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/notes/${id}`),
+    mutationFn: async (id: string) => {
+      const res = await api.delete(`/notes/${id}`);
+      if (!res.success) {
+        throw new Error(res.error?.message || 'Failed to delete note');
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
