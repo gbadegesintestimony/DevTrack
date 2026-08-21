@@ -339,8 +339,14 @@ export const SessionsPage: React.FC = () => {
 
       {/* Modal Dialog */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-dark-700 bg-dark-900 p-6 shadow-2xl space-y-4">
+        <div 
+          onClick={closeModal}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl border border-dark-700 bg-dark-900 p-6 shadow-2xl space-y-4"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-dark-800">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-purple-400" />
