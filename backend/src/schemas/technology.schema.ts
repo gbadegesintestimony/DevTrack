@@ -2,18 +2,41 @@ import { z } from 'zod';
 
 export const TechStatusEnum = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'MASTERED', 'ON_HOLD']);
 
+const dateOrEmptySchema = z
+  .string()
+  .datetime({ offset: true })
+  .or(z.string().regex(/^\d{4}-\d{2}-\d{2}/))
+  .or(z.literal(''))
+  .optional()
+  .nullable()
+  .transform((val) => (val === '' ? null : val));
+
 export const createTechnologySchema = z.object({
   name: z
     .string({ required_error: 'Technology name is required' })
     .min(1, 'Technology name cannot be empty')
     .max(100, 'Technology name cannot exceed 100 characters')
     .trim(),
-  description: z.string().max(1000).trim().optional().nullable(),
-  category: z.string().max(50).trim().optional().nullable(),
+  description: z
+    .string()
+    .max(1000)
+    .trim()
+    .or(z.literal(''))
+    .optional()
+    .nullable()
+    .transform((val) => (val === '' ? null : val)),
+  category: z
+    .string()
+    .max(50)
+    .trim()
+    .or(z.literal(''))
+    .optional()
+    .nullable()
+    .transform((val) => (val === '' ? null : val)),
   status: TechStatusEnum.optional().default('NOT_STARTED'),
-  progress: z.number().min(0).max(100).optional().default(0),
-  startDate: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)).optional().nullable(),
-  targetDate: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)).optional().nullable(),
+  progress: z.coerce.number().min(0).max(100).optional().default(0),
+  startDate: dateOrEmptySchema,
+  targetDate: dateOrEmptySchema,
 });
 
 export const updateTechnologySchema = createTechnologySchema.partial();

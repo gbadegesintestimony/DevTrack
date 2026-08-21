@@ -34,13 +34,33 @@ export const createResourceSchema = z.object({
     .min(1, 'Resource title cannot be empty')
     .max(200, 'Resource title cannot exceed 200 characters')
     .trim(),
-  description: z.string().max(1000).trim().optional().nullable(),
+  description: z
+    .string()
+    .max(1000)
+    .trim()
+    .or(z.literal(''))
+    .optional()
+    .nullable()
+    .transform((val) => (val === '' ? null : val)),
   url: secureUrlSchema,
-  technologyId: z.string().uuid('Invalid technology ID').optional().nullable(),
+  technologyId: z
+    .string()
+    .uuid('Invalid technology ID')
+    .or(z.literal(''))
+    .optional()
+    .nullable()
+    .transform((val) => (val === '' ? null : val)),
   type: ResourceTypeEnum.optional().default('ARTICLE'),
   status: ResourceStatusEnum.optional().default('NOT_STARTED'),
-  progress: z.number().min(0).max(100).optional().default(0),
-  notes: z.string().max(2000).trim().optional().nullable(),
+  progress: z.coerce.number().min(0).max(100).optional().default(0),
+  notes: z
+    .string()
+    .max(2000)
+    .trim()
+    .or(z.literal(''))
+    .optional()
+    .nullable()
+    .transform((val) => (val === '' ? null : val)),
 });
 
 export const updateResourceSchema = createResourceSchema.partial();
