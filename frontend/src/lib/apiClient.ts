@@ -1,11 +1,13 @@
 import { ApiResponse } from '../types';
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || '/api/v1';
+
 class ApiClient {
   private baseUrl: string;
   private csrfToken: string | null = null;
 
-  constructor(baseUrl: string = '/api/v1') {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl: string = API_BASE_URL) {
+    this.baseUrl = baseUrl.replace(/\/+$/, '');
   }
 
   public setCsrfToken(token: string | null) {
@@ -17,7 +19,8 @@ class ApiClient {
   }
 
   public async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${this.baseUrl}${cleanEndpoint}`;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -38,12 +41,11 @@ class ApiClient {
       headers['x-csrf-token'] = csrf;
     }
 
-
     try {
       const response = await fetch(url, {
         ...options,
         headers,
-        credentials: 'include', // Ensures HttpOnly session cookies are transmitted
+        credentials: 'include', // Transmits HttpOnly session cookies across origins
       });
 
       // Extract new CSRF token if returned in header
@@ -52,8 +54,28 @@ class ApiClient {
         this.csrfToken = newCsrf;
       }
 
-      const data: ApiResponse<T> = await response.json();
-      return data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data: ApiResponse<T> = await response.json();
+        return data;
+      }
+
+      // Handle non-JSON or empty response
+      const rawText = await response.text();
+      if (!response.ok) {
+        return {
+          success: false,
+          error: {
+            code: `HTTP_${response.status}`,
+            message: rawText || `Request failed with status ${response.status}`,
+          },
+        };
+      }
+
+      return {
+        success: true,
+        data: (rawText ? JSON.parse(rawText) : null) as T,
+      };
     } catch (error) {
       return {
         success: false,
