@@ -108,8 +108,8 @@ export const StatusPage: React.FC = () => {
               </span>
             )}
           </div>
-          <h2 className="text-sm font-semibold text-white">PostgreSQL 18</h2>
-          <p className="text-xs text-slate-400 mt-1">Self-hosted local database with Prisma ORM</p>
+          <h2 className="text-sm font-semibold text-white">PostgreSQL 16</h2>
+          <p className="text-xs text-slate-400 mt-1">Cloud relational database with Prisma ORM</p>
 
           <div className="mt-4 pt-4 border-t border-surface-border/60 flex items-center justify-between text-xs font-mono text-slate-400">
             <span>Query Latency:</span>
