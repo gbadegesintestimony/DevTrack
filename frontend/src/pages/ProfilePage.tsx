@@ -13,12 +13,15 @@ import {
   Edit2,
   Lock,
   X,
-  ShieldCheck
+  ShieldCheck,
+  Code2
 } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
   const { user, refreshUser } = useAuth();
 
+  // Profile Edit State
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [learningPrefs, setLearningPrefs] = useState<string>(
@@ -27,7 +30,7 @@ export const ProfilePage: React.FC = () => {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Change Password state
+  // Change Password State
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -55,6 +58,7 @@ export const ProfilePage: React.FC = () => {
     if (res.success) {
       setProfileMessage({ type: 'success', text: 'Profile updated successfully!' });
       await refreshUser();
+      setIsEditingProfile(false);
     } else {
       setProfileMessage({ type: 'error', text: res.error?.message || 'Failed to update profile.' });
     }
@@ -94,6 +98,12 @@ export const ProfilePage: React.FC = () => {
 
   if (!user) return null;
 
+  const currentPrefsArray = Array.isArray(user.learningPreferences)
+    ? user.learningPreferences
+    : typeof user.learningPreferences === 'string'
+    ? (user.learningPreferences as string).split(',').map((s) => s.trim())
+    : [];
+
   return (
     <div className="space-y-8 py-4 max-w-5xl mx-auto">
       {/* Header Profile Card */}
@@ -122,86 +132,175 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Profile Details Form */}
-        <div className="glass-panel rounded-2xl p-6 sm:p-8 space-y-6 border border-surface-border/80">
-          <div className="flex items-center gap-2 border-b border-surface-border/60 pb-4">
-            <UserIcon className="w-5 h-5 text-brand-400" />
-            <h2 className="text-lg font-bold text-white">Developer Profile Information</h2>
+        {/* Profile Details Container (Locked by Default with Edit Button) */}
+        <div className="glass-panel rounded-2xl p-6 sm:p-8 space-y-6 border border-surface-border/80 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-surface-border/60 pb-4">
+              <div className="flex items-center gap-2">
+                <UserIcon className="w-5 h-5 text-brand-400" />
+                <h2 className="text-lg font-bold text-white">Developer Profile Information</h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingProfile(!isEditingProfile);
+                  setProfileMessage(null);
+                  setName(user.name || '');
+                  setBio(user.bio || '');
+                  setLearningPrefs(
+                    Array.isArray(user.learningPreferences)
+                      ? user.learningPreferences.join(', ')
+                      : ''
+                  );
+                }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  isEditingProfile
+                    ? 'bg-dark-800 text-slate-300 hover:text-white border border-dark-700'
+                    : 'bg-brand-600/10 hover:bg-brand-600/20 text-brand-300 border border-brand-500/30'
+                }`}
+              >
+                {isEditingProfile ? (
+                  <>
+                    <X className="w-3.5 h-3.5" />
+                    <span>Cancel</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit2 className="w-3.5 h-3.5" />
+                    <span>Edit Profile</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {profileMessage && (
+              <div
+                className={`mt-4 p-3.5 rounded-xl text-xs flex items-center gap-2 ${
+                  profileMessage.type === 'success'
+                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
+                    : 'bg-rose-500/10 border border-rose-500/20 text-rose-300'
+                }`}
+              >
+                {profileMessage.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                )}
+                <span>{profileMessage.text}</span>
+              </div>
+            )}
+
+            {!isEditingProfile ? (
+              /* Locked / Read-Only View */
+              <div className="mt-6 space-y-5">
+                <div className="p-4 rounded-xl bg-dark-900/60 border border-dark-700/80 space-y-1.5">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">Full Name</span>
+                  <p className="text-sm font-semibold text-white">
+                    {user.name || <span className="text-slate-400 italic">Not set yet</span>}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-dark-900/60 border border-dark-700/80 space-y-1.5">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">Bio / Learning Objective</span>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    {user.bio || <span className="text-slate-400 italic">No bio provided yet.</span>}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-dark-900/60 border border-dark-700/80 space-y-2.5">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Code2 className="w-3.5 h-3.5 text-brand-400" />
+                    <span>Learning Focus & Preferences</span>
+                  </span>
+                  {currentPrefsArray.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {currentPrefsArray.map((pref, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-brand-500/10 text-brand-300 border border-brand-500/20"
+                        >
+                          {pref}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">No preferences selected.</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Active Profile Form View */
+              <form onSubmit={handleUpdateProfile} className="mt-6 space-y-4 animate-fade-in">
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Testimony Gbadegesin"
+                    className="w-full px-4 py-2.5 rounded-xl bg-dark-900/80 border border-dark-700 text-white text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5">
+                    Bio / Learning Objective
+                  </label>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={3}
+                    placeholder="Brief summary of your learning journey and career goals..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-dark-900/80 border border-dark-700 text-white text-sm focus:outline-none focus:border-brand-500 transition-colors resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5">
+                    Learning Preferences (Comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={learningPrefs}
+                    onChange={(e) => setLearningPrefs(e.target.value)}
+                    placeholder="e.g. Golang, TypeScript, JavaScript"
+                    className="w-full px-4 py-2.5 rounded-xl bg-dark-900/80 border border-dark-700 text-white text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1 font-mono">
+                    Separate technologies or topics with commas.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingProfile(false);
+                      setProfileMessage(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-dark-700 bg-dark-800 hover:bg-dark-700 text-slate-300 hover:text-white text-xs font-semibold transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUpdatingProfile}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium text-xs shadow-md shadow-brand-500/20 transition-all disabled:opacity-50"
+                  >
+                    {isUpdatingProfile ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Save className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isUpdatingProfile ? 'Saving...' : 'Save Profile Changes'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
-
-          {profileMessage && (
-            <div
-              className={`p-3.5 rounded-xl text-xs flex items-center gap-2 ${
-                profileMessage.type === 'success'
-                  ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
-                  : 'bg-rose-500/10 border border-rose-500/20 text-rose-300'
-              }`}
-            >
-              {profileMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 shrink-0" />
-              )}
-              <span>{profileMessage.text}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleUpdateProfile} className="space-y-4">
-            <div>
-              <label className="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5">
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Testimony Gbadegesin"
-                className="w-full px-4 py-2.5 rounded-xl bg-dark-900/80 border border-dark-700 text-white text-sm focus:outline-none focus:border-brand-500 transition-colors"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5">
-                Bio / Learning Objective
-              </label>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={3}
-                placeholder="Brief summary of your learning journey and career goals..."
-                className="w-full px-4 py-2.5 rounded-xl bg-dark-900/80 border border-dark-700 text-white text-sm focus:outline-none focus:border-brand-500 transition-colors resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5">
-                Learning Preferences (Comma-separated)
-              </label>
-              <input
-                type="text"
-                value={learningPrefs}
-                onChange={(e) => setLearningPrefs(e.target.value)}
-                placeholder="e.g. Golang, TypeScript, JavaScript"
-                className="w-full px-4 py-2.5 rounded-xl bg-dark-900/80 border border-dark-700 text-white text-sm focus:outline-none focus:border-brand-500 transition-colors"
-              />
-              <p className="text-[11px] text-slate-400 mt-1 font-mono">
-                Separate technologies or topics with commas.
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isUpdatingProfile}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium text-xs shadow-md shadow-brand-500/20 transition-all disabled:opacity-50"
-            >
-              {isUpdatingProfile ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Save className="w-3.5 h-3.5" />
-              )}
-              <span>{isUpdatingProfile ? 'Saving...' : 'Save Profile Changes'}</span>
-            </button>
-          </form>
         </div>
 
         {/* Change Password Form / Locked Security Container */}
