@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-  ShieldCheck, 
-  Terminal, 
-  Database, 
-  Lock, 
-  ArrowRight, 
-  Sparkles, 
+import {
+  ShieldCheck,
+  Terminal,
+  Database,
+  Lock,
+  ArrowRight,
+  Sparkles,
   Activity,
   Cpu,
   Target,

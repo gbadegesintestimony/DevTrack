@@ -13,7 +13,7 @@ export const authLimiter = rateLimit({
     success: false,
     error: {
       code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many authentication attempts from this IP. Please try again after 15 minutes.',
+      message: 'Too many login or registration attempts. For your security, please wait a few minutes before trying again.',
     },
   },
 });
@@ -30,7 +30,7 @@ export const apiLimiter = rateLimit({
     success: false,
     error: {
       code: 'RATE_LIMIT_EXCEEDED',
-      message: 'API rate limit exceeded. Please slow down your requests.',
+      message: 'You are making requests a bit too fast. Please slow down and try again.',
     },
   },
 });

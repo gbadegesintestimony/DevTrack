@@ -19,13 +19,13 @@ export class AuthService {
 
     if (existingUser) {
       if (existingUser.email.toLowerCase() === input.email.toLowerCase()) {
-        const error = new Error('An account with this email address already exists.');
+        const error = new Error('An account with this email address already exists. Please sign in instead.');
         (error as any).statusCode = 409;
         (error as any).code = 'EMAIL_ALREADY_EXISTS';
         throw error;
       }
       if (existingUser.username.toLowerCase() === input.username.toLowerCase()) {
-        const error = new Error('This username is already taken. Please choose another one.');
+        const error = new Error('This username is already taken. Please choose a different username.');
         (error as any).statusCode = 409;
         (error as any).code = 'USERNAME_ALREADY_EXISTS';
         throw error;
@@ -74,7 +74,7 @@ export class AuthService {
     // Constant-time simulated password check if user not found (prevents timing attacks)
     if (!user) {
       await hashPassword('dummy-password-for-timing-consistency');
-      const error = new Error('Invalid email/username or password.');
+      const error = new Error('Invalid email/username or password. Please check your credentials and try again.');
       (error as any).statusCode = 401;
       (error as any).code = 'INVALID_CREDENTIALS';
       throw error;
@@ -83,7 +83,7 @@ export class AuthService {
     const isPasswordValid = await verifyPassword(input.password, user.passwordHash);
 
     if (!isPasswordValid) {
-      const error = new Error('Invalid email/username or password.');
+      const error = new Error('Invalid email/username or password. Please check your credentials and try again.');
       (error as any).statusCode = 401;
       (error as any).code = 'INVALID_CREDENTIALS';
       throw error;
@@ -112,7 +112,7 @@ export class AuthService {
     });
 
     if (!user) {
-      // Do not reveal whether user exists or not
+      // Do not reveal whether user exists or not for privacy
       return { message: 'If an account exists with this email, a reset link will be sent.' };
     }
 
@@ -135,8 +135,6 @@ export class AuthService {
 
     logger.info({ userId: user.id }, 'Password reset token generated');
 
-    // In production, an email would be dispatched.
-    // For development, we return token metadata or log it safely.
     return {
       message: 'If an account exists with this email, a reset link will be sent.',
       resetToken: process.env.NODE_ENV !== 'production' ? rawToken : undefined,
@@ -155,7 +153,7 @@ export class AuthService {
     });
 
     if (!resetRecord || resetRecord.usedAt || resetRecord.expiresAt.getTime() < Date.now()) {
-      const error = new Error('Password reset token is invalid or has expired.');
+      const error = new Error('This password reset link is invalid or has expired. Please request a new one.');
       (error as any).statusCode = 400;
       (error as any).code = 'INVALID_RESET_TOKEN';
       throw error;
@@ -220,7 +218,7 @@ export class AuthService {
     });
 
     if (!user) {
-      const error = new Error('User not found.');
+      const error = new Error('User account could not be found.');
       (error as any).statusCode = 404;
       (error as any).code = 'USER_NOT_FOUND';
       throw error;
@@ -228,7 +226,7 @@ export class AuthService {
 
     const isCurrentValid = await verifyPassword(input.currentPassword, user.passwordHash);
     if (!isCurrentValid) {
-      const error = new Error('The current password you provided is incorrect.');
+      const error = new Error('The current password you entered is incorrect. Please try again.');
       (error as any).statusCode = 400;
       (error as any).code = 'INCORRECT_CURRENT_PASSWORD';
       throw error;
